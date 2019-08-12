@@ -1,0 +1,3 @@
+[submodule "third_party/nanostl"]
+	path = third_party/nanostl
+	url = https://github.com/lighttransport/nanostl.git
