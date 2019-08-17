@@ -173,6 +173,48 @@ int convolution(long long a[],long long b[],long long c[],int n){
 	return N;
 }
 
+int convolution2(long long a[],long long b[],long long c[],int n){
+	n *= 2;
+	int N = 2,index = 1;;
+	while (n > N){
+		N *= 2;
+		index++;
+	}
+  std::vector<std::complex<double>> ac(N);
+  std::vector<std::complex<double>> bc(N);
+
+  for (int i = 0; i < N; i++) {
+		ac[i] = std::complex<double>((i < n / 2) ? a[i] : 0.0,(i < n / 2) ? b[i] : 0.0);
+	}
+  cfft_inplace<double>(&ac);
+  for (int i = N / 2 + 1; i < N; i++) {
+    ac[i] = std::conj(ac[i]);
+  }
+  bc[0] = ac[0].imag();
+  bc[N / 2] = ac[N / 2].imag();
+  for (int i = 1; i < N / 2; i++) {
+    bc[i] = (ac[i] - ac[N - i]) * 0.5 * std::complex<double>(0.0, -1.0);
+  }
+  for (int i = 1; i < N / 2; i++) {
+    bc[N - i] = std::conj(bc[i]);
+  }
+  ac[0] = ac[0].real();
+  ac[N / 2] = ac[N / 2].real();
+  for (int i = 1; i < N / 2; i++) {
+    ac[i] = (ac[i] + ac[N - i]) / 2.0;
+  }
+  for (int i = 1; i < N / 2; i++) {
+    ac[N - i] = std::conj(ac[i]);
+  }
+  for (int i = 0; i < N; i++)  {
+    ac[i] *= bc[i];
+  }
+  cinvfft_inplace<double>(&ac);
+  for (int i = 0; i < N; i++) 
+		c[i] = ac[i].real() + 0.01;
+	return N;
+}
+
 long long n;
 long long a[100001],b[100001],c[200001];
 
@@ -181,7 +223,6 @@ int main() {
 
   for (int i = 0; i < n; i++) std::cin >> a[i+1] >> b[i+1];//a[0] = b[0] = 0とする
 
-	convolution(a,b,c,n+1);//0〜nのn+1個
-
+	convolution2(a,b,c,n+1);//0〜nのn+1個
   for (int i = 0; i < 2 * n; i++) std::cout << c[i + 1] << std::endl;
 }
