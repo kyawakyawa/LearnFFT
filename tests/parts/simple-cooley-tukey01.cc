@@ -168,7 +168,7 @@ int convolution(long long a[],long long b[],long long c[],int n){
     ac.at(i) *= bc.at(i);
   }
   cinvfft_inplace<double>(&ac);
-  for (int i = 0; i < N; i++) 
+  for (int i = 0; i < n; i++) 
 		c[i] = ac[i].real() + 0.01;
 	return N;
 }
@@ -181,42 +181,28 @@ int convolution2(long long a[],long long b[],long long c[],int n){
 		index++;
 	}
   std::vector<std::complex<double>> ac(N);
-  std::vector<std::complex<double>> bc(N);
 
   for (int i = 0; i < N; i++) {
 		ac[i] = std::complex<double>((i < n / 2) ? a[i] : 0.0,(i < n / 2) ? b[i] : 0.0);
 	}
   cfft_inplace<double>(&ac);
-  for (int i = N / 2 + 1; i < N; i++) {
-    ac[i] = std::conj(ac[i]);
-  }
-  bc[0] = ac[0].imag();
-  bc[N / 2] = ac[N / 2].imag();
+  ac[0] = ac[0].real() * ac[0].imag();
+  ac[N / 2] = ac[N / 2].real() * ac[N / 2].imag();
   for (int i = 1; i < N / 2; i++) {
-    bc[i] = (ac[i] - ac[N - i]) * 0.5 * std::complex<double>(0.0, -1.0);
+    const auto &&tmp = ac[i] * ac[i] - std::conj(ac[N - i] * ac[N - i]);
+    ac[i] = std::complex<double>(0.25 * tmp.imag(), -0.25 * tmp.real());
   }
-  for (int i = 1; i < N / 2; i++) {
-    bc[N - i] = std::conj(bc[i]);
-  }
-  ac[0] = ac[0].real();
-  ac[N / 2] = ac[N / 2].real();
-  for (int i = 1; i < N / 2; i++) {
-    ac[i] = (ac[i] + ac[N - i]) / 2.0;
-  }
-  for (int i = 1; i < N / 2; i++) {
-    ac[N - i] = std::conj(ac[i]);
-  }
-  for (int i = 0; i < N; i++)  {
-    ac[i] *= bc[i];
+  for (int i = N / 2; i < N; i++) {
+    ac[i] = std::conj(ac[N - i]);
   }
   cinvfft_inplace<double>(&ac);
-  for (int i = 0; i < N; i++) 
+  for (int i = 0; i < n; i++) 
 		c[i] = ac[i].real() + 0.01;
 	return N;
 }
 
 long long n;
-long long a[100001],b[100001],c[200001];
+long long a[100001],b[100001],c[200002];
 
 int main() {
 	std::cin >> n;
