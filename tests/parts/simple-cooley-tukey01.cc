@@ -195,9 +195,31 @@ int convolution2(long long a[],long long b[],long long c[],int n){
   for (int i = N / 2; i < N; i++) {
     ac[i] = std::conj(ac[N - i]);
   }
+
+  {
+    const auto tmp_r  = (ac[0].real() + ac[N / 2].real()) / 2.0;
+    const auto tmp_i  = (ac[0].real() - ac[N / 2].real()) / 2.0;
+
+    ac[0] = std::complex<double>(tmp_r, tmp_i);
+  }
+  for (int i = 1; i < N / 4/*floor*/; i++) {
+    const auto tmp = (std::complex<double>(0.0, 1.0) * std::conj(omega<double>[index][i]) - 1.0) * 0.5;
+    ac[N / 2 - i] = std::conj(ac[N / 2 - i]);
+    const auto &&tmp_c = tmp * (ac[i] - ac[N / 2 - i]);
+
+    ac[i] += tmp_c;
+    ac[N / 2 - i] -= tmp_c;
+    ac[N / 2 - i] = std::conj(ac[N / 2 - i]);
+  }
+  if (N % 4 == 0) {
+    ac[N / 4] = std::conj(ac[N / 4]);
+  }
+  ac.resize(N / 2);
   cinvfft_inplace<double>(&ac);
-  for (int i = 0; i < n; i++) 
-		c[i] = ac[i].real() + 0.01;
+  for (int i = 0; i < n / 2; i++) {
+    c[i * 2 + 0] = ac[i].real() + 0.01;
+		c[i * 2 + 1] = ac[i].imag() + 0.01;
+  }
 	return N;
 }
 
