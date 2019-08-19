@@ -4,14 +4,13 @@
 #include <tuple>
 
 template<typename T>
-constexpr T ext_gcd(const T a, const T b, T* x, T* y) {
-  if(b == static_cast<T>(0)) {
-    *x = 1; *y = 0;
-    return a;
-  }
-  const T d = ext_gcd(b, a % b, y, x);
-  *y -= *x * (a / b);
-  return d;
+constexpr std::tuple<T, T> ext_gcd(const T a, const T b) {
+  constexpr auto calc_xy = [](const T a, const T b,const std::tuple<T, T> xy) {
+    const auto [x_dash, y_dash] = xy;
+    return std::make_tuple(y_dash, x_dash - (a / b) * y_dash);
+  };
+
+  return (b == static_cast<T>(0)) ? std::make_tuple(1, 0) : calc_xy(a, b, ext_gcd(b, a % b));
 }
 
 template<typename T>
@@ -77,8 +76,8 @@ constexpr T find_one_of_primitive_root(const T p) {
   // TODO : ret < p?
   for (; ret <= p; ret++) {
     bool ok = true;
-    for (const auto v : factors) {
-      if (fast_mod_pow(ret, phi / std::get<0>(v), p) == 1) {
+    for (const auto [q, e] : factors) {
+      if (fast_mod_pow(ret, phi / q, p) == 1) {
         ok = false;
         break;
       }
@@ -93,9 +92,7 @@ int main(void) {
   int n;
   scanf("%d", &n);
   const auto ps = prime_factorization(n);
-  for (const auto v : ps) {
-    const int p = std::get<0>(v);
-    const int e = std::get<1>(v);
+  for (const auto [p, e] : ps) {
     printf("%d^%d = %d ",p, e, fast_pow(p, e));
   }
   printf("\n\n");
@@ -105,14 +102,13 @@ int main(void) {
     return 0;
   }
 
-  int n1 = fast_pow(std::get<0>(ps[1]), std::get<1>(ps[1]));
+  const int n1 = fast_pow(std::get<0>(ps[1]), std::get<1>(ps[1]));
   assert (n % n1 == 0);
-  int n2 = n / n1;
+  const int n2 = n / n1;
 
   printf("n1 = %d n2 = %d  n = %d\n", n1, n2, n1 * n2);
 
-  int inv_n1,inv_n2;
-  ext_gcd(n1, n2, &inv_n1, &inv_n2);
+  auto [inv_n1,inv_n2] = ext_gcd(n1, n2);
   inv_n1 = mod(inv_n1, n2);
   inv_n2 = mod(inv_n2, n1);
 
@@ -122,10 +118,10 @@ int main(void) {
   assert(mod(n1 * inv_n1, n2) == 1);
   assert(mod(n2 * inv_n2, n1) == 1);
 
-  int g1 = find_one_of_primitive_root(n1);
+  const int g1 = find_one_of_primitive_root(n1);
 
   printf("one of a primitive root is %d in mod %d\n", g1, n1);
-  int phi_n1 = euler_phi(n1);
+  const int phi_n1 = euler_phi(n1);
   for (int i = 1; i < phi_n1; i++) {
     assert(fast_mod_pow(g1, i, n1) != 1 ||  i == n1 - 1);
   }
