@@ -32,7 +32,7 @@ constexpr std::vector<std::tuple<T, T>> prime_factorization(T n) {
 }
 
 template <typename T>
-T fast_pow(T a, T n) {
+constexpr T fast_pow(T a, T n) {
   T ret = static_cast<T>(1);
   while (n > static_cast<T>(0)) {
     if (n & static_cast<T>(1)) ret = ret * a;
@@ -43,9 +43,50 @@ T fast_pow(T a, T n) {
 }
 
 template <typename T>
-T mod(const T a, const T m) {
+constexpr T fast_mod_pow(T a, T n, const T m) {
+  T ret = static_cast<T>(1);
+  while (n > static_cast<T>(0)) {
+    if (n & static_cast<T>(1)) ret = ret * a % m;
+    a = a * a % m;
+    n >>= static_cast<T>(1);
+  }
+  return ret;
+}
+template <typename T>
+constexpr T mod(const T a, const T m) {
   T ret = a % m;
   return (ret >= 0) ? ret : ret + m;
+}
+
+template <typename T>
+constexpr T euler_phi(const T n) {
+  const std::vector<std::tuple<T, T>> factors = prime_factorization(n);
+  T ret = n;
+  for (const auto [p, e] : factors) {
+    ret *= (p - 1);
+    ret /= p;
+  }
+  return ret;
+}
+
+template <typename T>
+constexpr T find_one_of_primitive_root(const T p) {
+  const std::vector<std::tuple<T, T>> factors = prime_factorization(p - 1);
+  const T phi = p - static_cast<T>(1);
+  T ret = static_cast<T>(2);
+  // TODO : ret < p?
+  for (; ret <= p; ret++) {
+    bool ok = true;
+    for (const auto v : factors) {
+      if (fast_mod_pow(ret, phi / std::get<0>(v), p) == 1) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) break;
+  }
+  if (ret >= p) ret = static_cast<T>(-1);
+  return ret;
 }
 
 int main(void) {
@@ -64,7 +105,7 @@ int main(void) {
     return 0;
   }
 
-  int n1 = fast_pow(std::get<0>(ps[0]), std::get<1>(ps[0]));
+  int n1 = fast_pow(std::get<0>(ps[1]), std::get<1>(ps[1]));
   assert (n % n1 == 0);
   int n2 = n / n1;
 
@@ -80,6 +121,15 @@ int main(void) {
 
   assert(mod(n1 * inv_n1, n2) == 1);
   assert(mod(n2 * inv_n2, n1) == 1);
+
+  int g1 = find_one_of_primitive_root(n1);
+
+  printf("one of a primitive root is %d in mod %d\n", g1, n1);
+  int phi_n1 = euler_phi(n1);
+  for (int i = 1; i < phi_n1; i++) {
+    assert(fast_mod_pow(g1, i, n1) != 1 ||  i == n1 - 1);
+  }
+  printf ("%d passed the primitive root test in mod %d\n", g1, n1);
 
   return 0;
 }
