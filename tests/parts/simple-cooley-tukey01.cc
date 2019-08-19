@@ -101,11 +101,11 @@ void cfft_inplace(std::vector<std::complex<T>> *a) {
   make_omega_table<T>(logn);
   make_bitrev_table(logn);
 
+  cooley_tukey_cfft_frequency_inplace(a->data(), logn);
   for (size_t i = 0; i < n; i++) {
     if (i < bitrev[logn][i])
       swap(a->operator[](i), a->operator[](bitrev[logn][i]));
   }
-  cooley_tukey_cfft_time_inplace(a->data(), logn);
 }
 
 template <typename T>
@@ -129,6 +129,30 @@ static void cooley_tukey_cinvfft_frequency_inplace(std::complex<T> *a,
 
   for (uint32_t i = 0; i < n; i++) a[i] /= n;
 }
+
+template <typename T>
+static void cooley_tukey_cinvfft_time_inplace(std::complex<T> *a,
+                                              const uint8_t logn) {
+  const uint32_t n = (1 << logn);
+  for (uint32_t i = 0; i < logn; i++) {
+    const uint32_t offset = (1 << i);
+    const uint32_t m      = (n >> (i + 1));
+    for (uint32_t j = 0; j < m; j++) {
+      for (uint32_t k = 0; k < offset; k++) {
+        const uint32_t id = j * 2 * offset + k;
+        a[id + offset] *= omega_inv<T>[i + 1][k];
+        const auto &tmp_a = a[id];
+        const auto &tmp_b = a[id + offset];
+        const auto tmp    = tmp_a - tmp_b;
+        a[id]             = tmp_a + tmp_b;
+        a[id + offset]    = tmp;
+      }
+    }
+  }
+
+  for (uint32_t i = 0; i < n; i++) a[i] /= n;
+}
+
 template <typename T>
 void cinvfft_inplace(std::vector<std::complex<T>> *a) {
   if (a->empty()) return;
@@ -140,12 +164,12 @@ void cinvfft_inplace(std::vector<std::complex<T>> *a) {
   make_omega_table<T>(logn);
   make_bitrev_table(logn);
 
-  cooley_tukey_cinvfft_frequency_inplace(a->data(), logn);
-
   for (size_t i = 0; i < n; i++) {
     if (i < bitrev[logn][i])
       swap(a->operator[](i), a->operator[](bitrev[logn][i]));
   }
+
+  cooley_tukey_cinvfft_time_inplace(a->data(), logn);
 }
 
 #include <iostream>
