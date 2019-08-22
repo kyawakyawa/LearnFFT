@@ -1,6 +1,6 @@
 set(CMAKE_CXX_STANDARD 17) # -std=c++17
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -Wall")
 
 if (WITH_TCMALLOC)
   set(COMMON_LIBS tcmalloc)
