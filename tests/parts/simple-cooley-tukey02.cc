@@ -35,7 +35,7 @@ void out_with_bitrev(const T* const input, const uint32_t n) {
 
 template <typename T>
 void cooley_turkey_fft_power2_frequency_inplace(T* const a, const uint32_t n,
-                                                char sign = -1) {
+                                                const T sign = -1.0) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
 
@@ -43,7 +43,7 @@ void cooley_turkey_fft_power2_frequency_inplace(T* const a, const uint32_t n,
     const uint32_t m2         = m / 2;
     const uint32_t num_of_fft = n / m;
 
-    const T theta = static_cast<T>(sign) * 2.0 * M_PI / static_cast<T>(m);
+    const T theta = sign * 2.0 * M_PI / static_cast<T>(m);
     for (uint32_t i = 0; i < num_of_fft; i++) {
       for (uint32_t j = 0; j < m2; j++) {
         const uint32_t id = m * i + j;
@@ -62,7 +62,7 @@ void cooley_turkey_fft_power2_frequency_inplace(T* const a, const uint32_t n,
 
 template <typename T>
 void cooley_turkey_fft_power4_frequency_inplace(T* const a, const uint32_t n,
-                                                char sign = -1) {
+                                                const T sign = -1.0) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
 
@@ -71,7 +71,7 @@ void cooley_turkey_fft_power4_frequency_inplace(T* const a, const uint32_t n,
     const uint32_t m4         = m / 4;
     const uint32_t num_of_fft = n / m;
 
-    const T theta = static_cast<T>(sign) * 2.0 * M_PI / static_cast<T>(m);
+    const T theta = sign * 2.0 * M_PI / static_cast<T>(m);
     for (uint32_t i = 0; i < num_of_fft; i++) {
       for (uint32_t j = 0; j < m4; j++) {
         const uint32_t id04 = 2 * (m * i + j);
@@ -134,8 +134,75 @@ void cooley_turkey_fft_power4_frequency_inplace(T* const a, const uint32_t n,
 }
 
 template <typename T>
+void cooley_turkey_fft_split_radix_frequency_inplace(T* const a,
+                                                     const uint32_t n,
+                                                     const T sign = -1.0) {
+  // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
+  if ((n & (n - 1))) return;
+
+  for (uint32_t m = n; m > 2; m >>= 1) {
+    const uint32_t m4 = m / 4;
+
+    const T theta = sign * 2.0 * M_PI / static_cast<T>(m);
+    for (int k = m; k <= n; k <<= 2) {
+      for (int i = k - m; i < n; i += 2 * k) {
+        for (int j = 0; j < m4; j++) {
+          const uint32_t id04 = 2 * (j + i);
+          const uint32_t id14 = id04 + 2 * m4;
+          const uint32_t id24 = id14 + 2 * m4;
+          const uint32_t id34 = id24 + 2 * m4;
+
+          const T qr = a[id04] - a[id24];
+          const T qi = a[id04 + 1] - a[id24 + 1];
+
+          a[id04] += a[id24];
+          a[id04 + 1] += a[id24 + 1];
+
+          const T sr = sign * (-a[id14 + 1] + a[id34 + 1]);
+          const T si = sign * (a[id14] - a[id34]);
+
+          a[id14] += a[id34];
+          a[id14 + 1] += a[id34 + 1];
+
+          const T omega1r = std::cos(theta * j);
+          const T omega1i = std::sin(theta * j);
+          const T omega2r = std::fma(static_cast<T>(2.0) * omega1r, omega1r,
+                                     -static_cast<T>(1.0));
+          const T omega2i = static_cast<T>(2.0) * omega1r * omega1i;
+          const T omega3r = std::fma(omega1r, omega2r, -omega1i * omega2i);
+          const T omega3i = std::fma(omega1r, omega2i, omega1i * omega2r);
+
+          const T tmp_r2 = qr + sr;
+          const T tmp_i2 = qi + si;
+          a[id24]        = std::fma(tmp_r2, omega1r, -tmp_i2 * omega1i);
+          a[id24 + 1]    = std::fma(tmp_r2, omega1i, tmp_i2 * omega1r);
+
+          const T tmp_r3 = qr - sr;
+          const T tmp_i3 = qi - si;
+          a[id34]        = std::fma(tmp_r3, omega3r, -tmp_i3 * omega3i);
+          a[id34 + 1]    = std::fma(tmp_r3, omega3i, tmp_i3 * omega3r);
+        }
+      }
+    }
+  }
+
+  for (uint32_t k = 2; k <= n; k <<= 2) {
+    for (uint32_t j = k - 2; j < n; j += 2 * k) {
+      const uint32_t id0 = 2 * j;
+      const uint32_t id1 = 2 * j + 2;
+      const T tmp_r      = a[id0] - a[id1];
+      const T tmp_i      = a[id0 + 1] - a[id1 + 1];
+      a[id0] += a[id1];
+      a[id0 + 1] += a[id1 + 1];
+      a[id1]     = tmp_r;
+      a[id1 + 1] = tmp_i;
+    }
+  }
+}
+
+template <typename T>
 void cooley_turkey_fft_power2_time_inplace(T* const a, const uint32_t n,
-                                           char sign = -1) {
+                                           const T sign = -1.0) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
 
@@ -143,7 +210,7 @@ void cooley_turkey_fft_power2_time_inplace(T* const a, const uint32_t n,
     const uint32_t m2         = m / 2;
     const uint32_t num_of_fft = n / m;
 
-    const T theta = static_cast<T>(sign) * 2.0 * M_PI / static_cast<T>(m);
+    const T theta = sign * 2.0 * M_PI / static_cast<T>(m);
     for (uint32_t i = 0; i < num_of_fft; i++) {
       for (uint32_t j = 0; j < m2; j++) {
         const uint32_t id = m * i + j;
@@ -164,7 +231,7 @@ void cooley_turkey_fft_power2_time_inplace(T* const a, const uint32_t n,
 
 template <typename T>
 void cooley_turkey_fft_power4_time_inplace(T* const a, const uint32_t n,
-                                           char sign = -1) {
+                                           const T sign = -1.0) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
 
@@ -198,7 +265,7 @@ void cooley_turkey_fft_power4_time_inplace(T* const a, const uint32_t n,
     const uint32_t m4         = m / 4;
     const uint32_t num_of_fft = n / m;
 
-    const T theta = static_cast<T>(sign) * 2.0 * M_PI / static_cast<T>(m);
+    const T theta = sign * 2.0 * M_PI / static_cast<T>(m);
     for (uint32_t i = 0; i < num_of_fft; i++) {
       for (uint32_t k = 0; k < m4; k++) {
         const uint32_t id04 = 2 * (m * i + k);
@@ -246,6 +313,73 @@ void cooley_turkey_fft_power4_time_inplace(T* const a, const uint32_t n,
 }
 
 template <typename T>
+void cooley_turkey_fft_split_radix_time_inplace(T* const a, const uint32_t n,
+                                                const T sign = -1.0) {
+  // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
+  if ((n & (n - 1))) return;
+
+  for (uint32_t k = 2; k <= n; k <<= 2) {
+    for (uint32_t j = k - 2; j < n; j += 2 * k) {
+      const uint32_t id0 = 2 * j;
+      const uint32_t id1 = 2 * j + 2;
+      const T tmp_r      = a[id0] - a[id1];
+      const T tmp_i      = a[id0 + 1] - a[id1 + 1];
+      a[id0] += a[id1];
+      a[id0 + 1] += a[id1 + 1];
+      a[id1]     = tmp_r;
+      a[id1 + 1] = tmp_i;
+    }
+  }
+
+  for (uint32_t m = 4; m <= n; m <<= 1) {
+    const uint32_t m4 = m / 4;
+
+    const T theta = sign * 2.0 * M_PI / static_cast<T>(m);
+    for (int j = m; j <= n; j <<= 2) {
+      for (int i = j - m; i < n; i += 2 * j) {
+        for (int k = 0; k < m4; k++) {
+          const uint32_t id04 = 2 * (k + i);
+          const uint32_t id14 = id04 + 2 * m4;
+          const uint32_t id24 = id14 + 2 * m4;
+          const uint32_t id34 = id24 + 2 * m4;
+
+          const T omega1r = std::cos(theta * k);
+          const T omega1i = std::sin(theta * k);
+          const T omega2r = std::fma(static_cast<T>(2.0) * omega1r, omega1r,
+                                     -static_cast<T>(1.0));
+          const T omega2i = static_cast<T>(2.0) * omega1r * omega1i;
+          const T omega3r = std::fma(omega1r, omega2r, -omega1i * omega2i);
+          const T omega3i = std::fma(omega1r, omega2i, omega1i * omega2r);
+
+          const T rr = std::fma(a[id24], omega1r, -a[id24 + 1] * omega1i);
+          const T ri = std::fma(a[id24], omega1i, a[id24 + 1] * omega1r);
+          const T sr = std::fma(a[id34], omega3r, -a[id34 + 1] * omega3i);
+          const T si = std::fma(a[id34], omega3i, a[id34 + 1] * omega3r);
+
+          const T xr = a[id04];
+          const T xi = a[id04 + 1];
+          const T yr = a[id14];
+          const T yi = a[id14 + 1];
+          const T zr = rr + sr;
+          const T zi = ri + si;
+          const T wr = sign * (-ri + si);
+          const T wi = sign * (rr - sr);
+
+          a[id04]     = xr + zr;
+          a[id04 + 1] = xi + zi;
+          a[id14]     = yr + wr;
+          a[id14 + 1] = yi + wi;
+          a[id24]     = xr - zr;
+          a[id24 + 1] = xi - zi;
+          a[id34]     = yr - wr;
+          a[id34 + 1] = yi - wi;
+        }
+      }
+    }
+  }
+}
+
+template <typename T>
 std::vector<T> convolution(const std::vector<T>& a, const std::vector<T>& b) {
   const size_t n = 2 * std::max(a.size(), b.size());
   int N          = 2;
@@ -258,8 +392,8 @@ std::vector<T> convolution(const std::vector<T>& a, const std::vector<T>& b) {
     bc[2 * i]     = (i < b.size()) ? b[i] : static_cast<T>(0.0);
     bc[2 * i + 1] = static_cast<T>(0.0);
   }
-  cooley_turkey_fft_power4_frequency_inplace(ac.data(), N);
-  cooley_turkey_fft_power4_frequency_inplace(bc.data(), N);
+  cooley_turkey_fft_split_radix_frequency_inplace(ac.data(), N);
+  cooley_turkey_fft_split_radix_frequency_inplace(bc.data(), N);
   for (size_t i = 0; i < N; i++) {
     const T i2    = 2 * i;
     const T tmp_r = ac[i2];
@@ -267,7 +401,7 @@ std::vector<T> convolution(const std::vector<T>& a, const std::vector<T>& b) {
     ac[i2]        = tmp_r * bc[i2] - tmp_i * bc[i2 + 1];
     ac[i2 + 1]    = tmp_r * bc[i2 + 1] + tmp_i * bc[i2];
   }
-  cooley_turkey_fft_power4_time_inplace(ac.data(), N, 1);
+  cooley_turkey_fft_split_radix_time_inplace(ac.data(), N, 1.0);
   std::vector<T> ret(n);
   for (size_t i = 0; i < n; i++) {
     ret[i] = (ac[i * 2] / static_cast<T>(N) + 0.01);
