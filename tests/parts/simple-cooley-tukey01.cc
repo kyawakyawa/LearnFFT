@@ -50,7 +50,7 @@ void make_bitrev_table(const uint_fast8_t logn) {
 }
 
 template <typename T>
-static void cooley_tukey_cfft_frequency_inplace(std::complex<T> *a,
+static void cooley_tukey_cfft_frequency_inplace(std::complex<T> *const a,
                                                 const uint_fast8_t logn) {
   const uint32_t n = (1 << logn);
   for (uint32_t i = 0; i < logn; i++) {
@@ -70,7 +70,7 @@ static void cooley_tukey_cfft_frequency_inplace(std::complex<T> *a,
 }
 
 template <typename T>
-static void cooley_tukey_cfft_time_inplace(std::complex<T> *a,
+static void cooley_tukey_cfft_time_inplace(std::complex<T> *const a,
                                            const uint_fast8_t logn) {
   const uint32_t n = (1 << logn);
   for (uint32_t i = 0; i < logn; i++) {
@@ -91,7 +91,7 @@ static void cooley_tukey_cfft_time_inplace(std::complex<T> *a,
 }
 
 template <typename T>
-void cfft_inplace(std::vector<std::complex<T>> *a) {
+void cfft_inplace(std::vector<std::complex<T>> *const a) {
   if (a->empty()) return;
   const size_t n = a->size();
 
@@ -109,7 +109,7 @@ void cfft_inplace(std::vector<std::complex<T>> *a) {
 }
 
 template <typename T>
-static void cooley_tukey_cinvfft_frequency_inplace(std::complex<T> *a,
+static void cooley_tukey_cinvfft_frequency_inplace(std::complex<T> *const a,
                                                    const uint_fast8_t logn) {
   const uint32_t n = (1 << logn);
   for (uint32_t i = 0; i < logn; i++) {
@@ -131,7 +131,7 @@ static void cooley_tukey_cinvfft_frequency_inplace(std::complex<T> *a,
 }
 
 template <typename T>
-static void cooley_tukey_cinvfft_time_inplace(std::complex<T> *a,
+static void cooley_tukey_cinvfft_time_inplace(std::complex<T> *const a,
                                               const uint8_t logn) {
   const uint32_t n = (1 << logn);
   for (uint32_t i = 0; i < logn; i++) {
@@ -154,7 +154,7 @@ static void cooley_tukey_cinvfft_time_inplace(std::complex<T> *a,
 }
 
 template <typename T>
-void cinvfft_inplace(std::vector<std::complex<T>> *a) {
+void cinvfft_inplace(std::vector<std::complex<T>> *const a) {
   if (a->empty()) return;
   const size_t n = a->size();
 
@@ -174,7 +174,7 @@ void cinvfft_inplace(std::vector<std::complex<T>> *a) {
 
 #include <iostream>
 
-int convolution(long long a[], long long b[], long long c[], int n) {
+int convolution(int a[], int b[], int c[], int n) {
   n *= 2;
   int N = 2, index = 1;
   ;
@@ -199,7 +199,7 @@ int convolution(long long a[], long long b[], long long c[], int n) {
   return N;
 }
 
-int convolution2(long long a[], long long b[], long long c[], int n) {
+int convolution2(int a[], int b[], int c[], int n) {
   n *= 2;
   int N = 2, index = 1;
   ;
@@ -254,15 +254,14 @@ int convolution2(long long a[], long long b[], long long c[], int n) {
   return N;
 }
 
-long long n;
-long long a[100001], b[100001], c[200002];
+int n;
+int a[100001], b[100001], c[200002];
 
 int main() {
-  std::cin >> n;
+  scanf("%d", &n);
 
-  for (int i = 0; i < n; i++)
-    std::cin >> a[i + 1] >> b[i + 1];  // a[0] = b[0] = 0とする
+  for (int i = 0; i < n; i++) scanf("%d%d", a + i + 1, b + i + 1);
 
   convolution2(a, b, c, n + 1);  // 0〜nのn+1個
-  for (int i = 0; i < 2 * n; i++) std::cout << c[i + 1] << std::endl;
+  for (int i = 0; i < 2 * n; i++) printf("%d\n", c[i + 1]);
 }

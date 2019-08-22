@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 template <typename T>
-void out_with_bitrev(T* input, const uint32_t n) {
+void out_with_bitrev(const T* const input, const uint32_t n) {
   int i = 0;
   std::vector<T> a(2 * n);
   for (size_t i = 0; i < n; i++) {
@@ -34,7 +34,7 @@ void out_with_bitrev(T* input, const uint32_t n) {
 }
 
 template <typename T>
-void cooley_turkey_fft_power2_frequency_inplace(T* a, const uint32_t n,
+void cooley_turkey_fft_power2_frequency_inplace(T* const a, const uint32_t n,
                                                 char sign = -1) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
@@ -61,7 +61,7 @@ void cooley_turkey_fft_power2_frequency_inplace(T* a, const uint32_t n,
 }
 
 template <typename T>
-void cooley_turkey_fft_power4_frequency_inplace(T* a, const uint32_t n,
+void cooley_turkey_fft_power4_frequency_inplace(T* const a, const uint32_t n,
                                                 char sign = -1) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
@@ -134,7 +134,7 @@ void cooley_turkey_fft_power4_frequency_inplace(T* a, const uint32_t n,
 }
 
 template <typename T>
-void cooley_turkey_fft_power2_time_inplace(T* a, const uint32_t n,
+void cooley_turkey_fft_power2_time_inplace(T* const a, const uint32_t n,
                                            char sign = -1) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
@@ -163,7 +163,7 @@ void cooley_turkey_fft_power2_time_inplace(T* a, const uint32_t n,
 }
 
 template <typename T>
-void cooley_turkey_fft_power4_time_inplace(T* a, const uint32_t n,
+void cooley_turkey_fft_power4_time_inplace(T* const a, const uint32_t n,
                                            char sign = -1) {
   // a = {Re(a0), Im(a0), Re(a1), Im(a1), ..., Re(an-1), Im(an-1)}
   if ((n & (n - 1))) return;
@@ -281,16 +281,19 @@ using namespace std;
 
 int main(void) {
   int n;
-  cin >> n;
+  scanf("%d", &n);
 
   vector<double> a(n + 1), b(n + 1);
   a[0] = b[0] = 0;
   for (int i = 0; i < n; i++) {
-    cin >> a[i + 1] >> b[i + 1];
+    int tmp_a, tmp_b;
+    scanf("%d %d", &tmp_a, &tmp_b);
+    a[i + 1] = static_cast<double>(tmp_a);
+    b[i + 1] = static_cast<double>(tmp_b);
   }
   const auto c = convolution(a, b);
   for (int i = 0; i < 2 * n; i++) {
-    cout << static_cast<long long>(c[i + 1]) << endl;
+    printf("%d\n", static_cast<int>(c[i + 1]));
   }
   return 0;
 }
