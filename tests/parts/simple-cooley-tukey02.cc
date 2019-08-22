@@ -85,8 +85,8 @@ void cooley_turkey_fft_power4_frequency_inplace(T* a, const uint32_t n,
         const T qi = a[id04 + 1] - a[id24 + 1];
         const T rr = a[id14] + a[id34];
         const T ri = a[id14 + 1] + a[id34 + 1];
-        const T sr = -a[id14 + 1] + a[id34 + 1];
-        const T si = a[id14] - a[id34];
+        const T sr = sign * (-a[id14 + 1] + a[id34 + 1]);
+        const T si = sign * (a[id14] - a[id34]);
 
         const T omega1r = std::cos(theta * j);
         const T omega1i = std::sin(theta * j);
@@ -104,36 +104,31 @@ void cooley_turkey_fft_power4_frequency_inplace(T* a, const uint32_t n,
         a[id14]        = std::fma(tmp_r1, omega2r, -tmp_i1 * omega2i);
         a[id14 + 1]    = std::fma(tmp_r1, omega2i, tmp_i1 * omega2r);
 
-        const T tmp_r2 = qr - sr;
-        const T tmp_i2 = qi - si;
+        const T tmp_r2 = qr + sr;
+        const T tmp_i2 = qi + si;
         a[id24]        = std::fma(tmp_r2, omega1r, -tmp_i2 * omega1i);
         a[id24 + 1]    = std::fma(tmp_r2, omega1i, tmp_i2 * omega1r);
 
-        const T tmp_r3 = qr + sr;
-        const T tmp_i3 = qi + si;
+        const T tmp_r3 = qr - sr;
+        const T tmp_i3 = qi - si;
         a[id34]        = std::fma(tmp_r3, omega3r, -tmp_i3 * omega3i);
         a[id34 + 1]    = std::fma(tmp_r3, omega3i, tmp_i3 * omega3r);
       }
     }
   }
 
-  for (; m > 1; m >>= 1) {
-    const uint32_t m2         = m / 2;
-    const uint32_t num_of_fft = n / m;
+  if (m > 1) {
+    const uint32_t num_of_fft = n / 2;
 
-    const T theta = static_cast<T>(sign) * 2.0 * M_PI / static_cast<T>(m);
     for (uint32_t i = 0; i < num_of_fft; i++) {
-      for (uint32_t j = 0; j < m2; j++) {
-        const uint32_t id = m * i + j;
-        const T tmp_r     = a[2 * id] - a[2 * (id + m2)];
-        const T tmp_i     = a[2 * id + 1] - a[2 * (id + m2) + 1];
-        a[2 * id] += a[2 * (id + m2)];
-        a[2 * id + 1] += a[2 * (id + m2) + 1];
-        const T omega_r      = std::cos(theta * j);
-        const T omega_i      = std::sin(theta * j);
-        a[2 * (id + m2)]     = std::fma(tmp_r, omega_r, -tmp_i * omega_i);
-        a[2 * (id + m2) + 1] = std::fma(tmp_r, omega_i, tmp_i * omega_r);
-      }
+      const uint32_t id02 = 2 * 2 * i;
+      const uint32_t id12 = id02 + 2 * 1;
+      const T tmp_r       = a[id02];
+      const T tmp_i       = a[id02 + 1];
+      a[id02] += a[id12];
+      a[id02 + 1] += a[id12 + 1];
+      a[id12]     = tmp_r - a[id12];
+      a[id12 + 1] = tmp_i - a[id12 + 1];
     }
   }
 }
