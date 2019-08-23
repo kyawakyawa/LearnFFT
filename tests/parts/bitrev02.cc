@@ -17,7 +17,7 @@ constexpr std::tuple<I, I> bitrev_initialization(const I n, I* const ip) {
 }
 
 template <typename T, typename I = uint32_t>
-constexpr void bitrv_scramble(T* const a, const T* const ip, const I n,
+constexpr void bitrv_scramble(T* const a, const I* const ip, const I n,
                               const I m, const I k) {
   if (m == k) {
     for (I i = 1; i < m; i++) {
