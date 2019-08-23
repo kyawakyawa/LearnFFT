@@ -52,8 +52,8 @@ void test01(void) {
   std::mt19937 engine(seed_gen());
   std::uniform_real_distribution<> dist1(0.0, 1.0);
 
-  const size_t n1 = 4;  // seed_gen() % 100 + 1;
-  const size_t n2 = 8;  // seed_gen() % 100 + 1;
+  const size_t n1 = seed_gen() % 100 + 1;
+  const size_t n2 = seed_gen() % 100 + 1;
   std::vector<double> a(n1 * n2 * 2);
 
   for (auto& v : a) {
