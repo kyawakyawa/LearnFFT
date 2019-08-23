@@ -25,11 +25,6 @@ void transpose_on_cache(const T* const a, const uint32_t n, const uint32_t m,
 #endif
   constexpr uint32_t kBlock = std::max<uint32_t>(kCacheLineSize / sizeof(T), 1);
 
-  if (n <= kBlock && m <= kBlock) {
-    transpose_naive(a, n, m, at);
-    return;
-  }
-
   for (uint32_t i = 0; i < n; i += kBlock) {
     for (uint32_t j = 0; j < m; j += kBlock) {
       const uint32_t n_ = std::min(i + kBlock, n);
