@@ -1,6 +1,6 @@
 set(CMAKE_CXX_STANDARD 17) # -std=c++17
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -Wall")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Og -g  -march=native -fno-inline -Wall")
 
 if (WITH_TCMALLOC)
   set(COMMON_LIBS tcmalloc)
@@ -11,6 +11,8 @@ add_executable("bitrev02" ./bitrev02.cc)
 add_executable("number-functions01" ./number-functions01.cc)
 add_executable("simple-cooley-tukey01" ./simple-cooley-tukey01.cc)
 add_executable("simple-cooley-tukey02" ./simple-cooley-tukey02.cc)
+add_executable("simple-stockham01"     ./simple-stockham01.cc)
+add_executable("simple-rader01" ./simple-rader01.cc)
 add_executable("six-step-cooley-tukey01" ./six-step-cooley-tukey01.cc)
 add_executable("split-radix-index" ./split-radix-index.cc)
 add_executable("transpose01" ./transpose01.cc)
@@ -21,6 +23,8 @@ target_link_libraries("bitrev02"                ${COMMON_LIBS}) # Link Libraries
 target_link_libraries("number-functions01"      ${COMMON_LIBS}) # Link Libraries
 target_link_libraries("simple-cooley-tukey01"   ${COMMON_LIBS}) # Link Libraries
 target_link_libraries("simple-cooley-tukey02"   ${COMMON_LIBS}) # Link Libraries
+target_link_libraries("simple-stockham01"       ${COMMON_LIBS}) # Link Libraries
+target_link_libraries("simple-rader01"          ${COMMON_LIBS}) # Link Libraries
 target_link_libraries("six-step-cooley-tukey01" ${COMMON_LIBS}) # Link Libraries
 target_link_libraries("split-radix-index"       ${COMMON_LIBS}) # Link Libraries
 target_link_libraries("transpose01"             ${COMMON_LIBS}) # Link Libraries
